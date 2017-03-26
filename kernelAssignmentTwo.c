@@ -41,7 +41,19 @@ int init_module(void)
 
 
 //get rid of the kernel module
+//I wrapped the exit method from out implementation example into this
+//so that we can get rid of the device and class while we clean this
+//out of the kernel
 void cleanup_module(void)
 {
     printk(KERN_INFO "Removing module...\n");
+    //get rid of the device
+    device_destroy(kernelAssignmentTwoClass, MKDEV(majorNumber, 0));
+    //take the device out of its class
+    class_unregister(kernelAssignmentTwoClass);
+    //remove the class the device was associated with
+    class_destroy(kernelAssignmentTwoClass);
+    //get rid of the device number
+    unregister_chrdev(majorNumber, DEVICE_NAME);
+    printk(KERN_INFO "finished with module and LKM cleanup\n");
 }
