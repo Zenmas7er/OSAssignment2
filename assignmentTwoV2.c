@@ -1,6 +1,6 @@
 /*
 Mark Vetro
-Nicholas Ho Lung
+Nicoholas Ho Lung
 Jesse Lopez
 
 Operating Systems Assignment 2
@@ -14,42 +14,10 @@ Operating Systems Assignment 2
 #include <linux/module.h>         // Core header for loading LKMs into the kernel
 #include <linux/device.h>         // Header to support the kernel Driver Model
 #include <linux/kernel.h>         // Contains types, macros, functions for the kernel
+#include <linux/fs.h>
 #include <asm/uaccess.h>          // Required for the copy to user function
-#define  DEVICE_NAME "assignmentTwoV2"    ///< The device will appear at /dev/assignmentTwoV2 using this value
+//#define  DEVICE_NAME "assignmentTwoV2"    ///< The device will appear at /dev/assignmentTwoV2 using this value
 #define  CLASS_NAME  "ATV2"        ///< The device class -- this is a character device driver
-
-
-
- //struct containing prototypes for our lovely functions
- struct file_operations {
-   struct module *owner;                             // Pointer to the LKM that owns the structure
-   loff_t (*llseek) (struct file *, loff_t, int);    // Change current read/write position in a file
-   ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);    // Used to retrieve data from the device
-   ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);   // Used to send data to the device
-   ssize_t (*aio_read) (struct kiocb *, const struct iovec *, unsigned long, loff_t);  // Asynchronous read
-   ssize_t (*aio_write) (struct kiocb *, const struct iovec *, unsigned long, loff_t); // Asynchronous write
-   ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);            // possibly asynchronous read
-   ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);           // possibly asynchronous write
-   int (*iterate) (struct file *, struct dir_context *);                // called when VFS needs to read the directory contents
-   unsigned int (*poll) (struct file *, struct poll_table_struct *);    // Does a read or write block?
-   long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long); // Called by the ioctl system call
-   long (*compat_ioctl) (struct file *, unsigned int, unsigned long);   // Called by the ioctl system call
-   int (*mmap) (struct file *, struct vm_area_struct *);                // Called by mmap system call
-   int (*mremap)(struct file *, struct vm_area_struct *);               // Called by memory remap system call
-   int (*open) (struct inode *, struct file *);             // first operation performed on a device file
-   int (*flush) (struct file *, fl_owner_t id);             // called when a process closes its copy of the descriptor
-   int (*release) (struct inode *, struct file *);          // called when a file structure is being released
-   int (*fsync) (struct file *, loff_t, loff_t, int datasync);  // notify device of change in its FASYNC flag
-   int (*aio_fsync) (struct kiocb *, int datasync);         // synchronous notify device of change in its FASYNC flag
-   int (*fasync) (int, struct file *, int);                 // asynchronous notify device of change in its FASYNC flag
-   int (*lock) (struct file *, int, struct file_lock *);    // used to implement file locking
-   …
-};
-
-
-
-
-
 
 MODULE_LICENSE("GPL");            ///< The license type -- this affects available functionality
 MODULE_AUTHOR("Mark Vetro, Nicholas Ho Lung, Jesse Lopez");    ///< The author -- visible when you use modinfo
@@ -57,6 +25,7 @@ MODULE_DESCRIPTION("Our great operating systems homework assignment");  ///< The
 MODULE_VERSION("0.1");            ///< A version number to inform users
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
+static char   DEVICE_NAME[4] = "ATV2";
 static char   message[1024] = {0};           ///< Memory for the string that is passed from userspace
 static short  size_of_message;              ///< Used to remember the size of the string stored
 static int    numberOpens = 0;              ///< Counts the number of times the device is opened
