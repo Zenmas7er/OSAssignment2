@@ -8,6 +8,15 @@ Operating Systems Assignment 2
 
 
 
+typedef struct bufferTracker
+{
+    int startIndex;
+    int endIndex;
+}EXPORT_SYMBOL(bufferTracker);
+
+static void enque(char *buffer, bufferTracker* root);
+
+
 
 //necessary linux libraries for operation
 #include <linux/init.h>           // Macros used to mark up functions e.g. __init __exit
@@ -63,6 +72,14 @@ static struct file_operations fops =
  *  @return returns 0 if successful
  */
 static int __init assignmentTwoV2_init(void){
+
+    bufferTracker *bufferTrackerOn;
+    bufferTrackerOn = (struct bufferTracker *) malloc(sizeof(struct bufferTracker));
+
+
+    bufferTrackerOn->startIndex = 0;
+    bufferTrackerOn->endIndex = 0;
+
    printk(KERN_INFO "assignmentTwoV2: Initializing the assignmentTwoV2 LKM\n");
 
    // Try to dynamically allocate a major number for the device -- more difficult but worth it
@@ -149,9 +166,9 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
  *  @param offset The offset if required
  */
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
-   sprintf(message, "%s(%zu letters)", buffer, len);   // appending received string with its length
-   size_of_message = strlen(message);                 // store the length of the stored message
-   printk(KERN_INFO "assignmentTwoV2: Received %zu characters from the user\n", len);
+
+   len = size_of_message;
+   enque(buffer, bufferTrackerOn)
    return len;
 }
 
@@ -171,3 +188,39 @@ static int dev_release(struct inode *inodep, struct file *filep){
  */
 module_init(assignmentTwoV2_init);
 module_exit(assignmentTwoV2_exit);
+
+
+
+
+
+
+static void enque(char *buffer, bufferTracker* bufferTracker)
+{
+    int i = 0;
+
+    for(i; i<strlen(buffer); i++)
+    {
+
+        //first check if it's full
+
+        if(bufferTracker->endIndex>1024)
+        {
+            //there isn't enough space
+            printk("The buffer is full \n");
+            break;
+        }
+
+        else
+        {
+            message[bufferTracker->endIndex] = buffer[i];
+            bufferTracker->endIndex = bufferTracker->endIndex+1;
+        }
+
+    }
+
+    printk("writing %s to the buffer \n", buffer);
+
+}
+
+
+
