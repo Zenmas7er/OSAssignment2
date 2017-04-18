@@ -7,14 +7,10 @@ Operating Systems Assignment 2
 */
 
 
+//global struct from a header file, because why not?
+bufferTracker bufferParams = { 1024, 1024};
 
-typedef struct bufferTracker
-{
-    int startIndex;
-    int endIndex;
-}EXPORT_SYMBOL(bufferTracker);
-
-static void enque(char *buffer, bufferTracker* root);
+static void enque(char *buffer);
 
 
 
@@ -73,12 +69,10 @@ static struct file_operations fops =
  */
 static int __init assignmentTwoV2_init(void){
 
-    bufferTracker *bufferTrackerOn;
-    bufferTrackerOn = (struct bufferTracker *) malloc(sizeof(struct bufferTracker));
 
-
-    bufferTrackerOn->startIndex = 0;
-    bufferTrackerOn->endIndex = 0;
+    //this should set up the buffer record keeping stuff
+    bufferParams.startIndex = 0;
+    bufferParams.endIndex = 0;
 
    printk(KERN_INFO "assignmentTwoV2: Initializing the assignmentTwoV2 LKM\n");
 
@@ -168,7 +162,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
 
    len = size_of_message;
-   enque(buffer, bufferTrackerOn)
+   enque(buffer)
    return len;
 }
 
@@ -194,7 +188,7 @@ module_exit(assignmentTwoV2_exit);
 
 
 
-static void enque(char *buffer, bufferTracker* bufferTracker)
+static void enque(char *buffer)
 {
     int i = 0;
 
@@ -203,7 +197,7 @@ static void enque(char *buffer, bufferTracker* bufferTracker)
 
         //first check if it's full
 
-        if(bufferTracker->endIndex>1024)
+        if(bufferParams.endIndex>1024)
         {
             //there isn't enough space
             printk("The buffer is full \n");
@@ -212,8 +206,8 @@ static void enque(char *buffer, bufferTracker* bufferTracker)
 
         else
         {
-            message[bufferTracker->endIndex] = buffer[i];
-            bufferTracker->endIndex = bufferTracker->endIndex+1;
+            message[bufferParams.endIndex] = buffer[i];
+            bufferParams.endIndex = bufferParams.endIndex+1;
         }
 
     }
