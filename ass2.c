@@ -7,11 +7,6 @@ Operating Systems Assignment 2
 */
 
 
-//global struct from a header file, because why not?
-bufferTracker bufferParams = { 1024, 1024};
-
-static void enque(char *buffer);
-
 
 
 //necessary linux libraries for operation
@@ -21,7 +16,7 @@ static void enque(char *buffer);
 #include <linux/kernel.h>         // Contains types, macros, functions for the kernel
 #include <linux/fs.h>
 #include <asm/uaccess.h>          // Required for the copy to user function
-//#define  DEVICE_NAME "assignmentTwoV2"    ///< The device will appear at /dev/assignmentTwoV2 using this value
+#define  DEVICE_NAME "ass2"    ///< The device will appear at /dev/assignmentTwoV2 using this value
 #define  CLASS_NAME  "ATV2"        ///< The device class -- this is a character device driver
 
 MODULE_LICENSE("GPL");            ///< The license type -- this affects available functionality
@@ -68,12 +63,6 @@ static struct file_operations fops =
  *  @return returns 0 if successful
  */
 static int __init assignmentTwoV2_init(void){
-
-
-    //this should set up the buffer record keeping stuff
-    bufferParams.startIndex = 0;
-    bufferParams.endIndex = 0;
-
    printk(KERN_INFO "assignmentTwoV2: Initializing the assignmentTwoV2 LKM\n");
 
    // Try to dynamically allocate a major number for the device -- more difficult but worth it
@@ -145,6 +134,7 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
       printk(KERN_INFO "assignmentTwoV2: Sent %d characters to the user\n", size_of_message);
       return (size_of_message=0);  // clear the position to the start and return 0
    }
+
    else {
       printk(KERN_INFO "assignmentTwoV2: Failed to send %d characters to the user\n", error_count);
       return -EFAULT;              // Failed -- return a bad address message (i.e. -14)
@@ -161,9 +151,25 @@ static ssize_t dev_read(struct file *filep, char *buffer, size_t len, loff_t *of
  */
 static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
 
-   len = size_of_message;
-   enque(buffer)
-   return len;
+   if(size_of_message>1024)
+   {
+       printk(KERN_INFO "buffer is full\n");
+       return 0;
+   }
+
+   else if(len + size_of_message > 1024)
+   {
+       snprintf(message, 1024-size_of_message, "%s", buffer);
+       printk(KERN_INFO "received %d characters from the user\n", 1024-size_of_message);
+       return (1024-size_of_message);
+   }
+
+   else
+    {
+        sprintf(message, "%s", buffer);   // appending received string with its length
+        size_of_message = strlen(message); // store the length of the stored message
+        return len;
+    }
 }
 
 /** @brief The device release function that is called whenever the device is closed/released by
@@ -182,39 +188,3 @@ static int dev_release(struct inode *inodep, struct file *filep){
  */
 module_init(assignmentTwoV2_init);
 module_exit(assignmentTwoV2_exit);
-
-
-
-
-
-
-static void enque(char *buffer)
-{
-    int i = 0;
-
-    for(i; i<strlen(buffer); i++)
-    {
-
-        //first check if it's full
-
-        if(bufferParams.endIndex>1024)
-        {
-            //there isn't enough space
-            printk("The buffer is full \n");
-            break;
-        }
-
-        else
-        {
-            message[bufferParams.endIndex] = buffer[i];
-            bufferParams.endIndex = bufferParams.endIndex+1;
-        }
-
-    }
-
-    printk("writing %s to the buffer \n", buffer);
-
-}
-
-
-
