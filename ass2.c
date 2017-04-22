@@ -16,6 +16,7 @@ Operating Systems Assignment 2
 #include <linux/kernel.h>         // Contains types, macros, functions for the kernel
 #include <linux/fs.h>
 #include <asm/uaccess.h>          // Required for the copy to user function
+
 #define  DEVICE_NAME "ass2"    ///< The device will appear at /dev/assignmentTwoV2 using this value
 #define  CLASS_NAME  "ATV2"        ///< The device class -- this is a character device driver
 
@@ -25,7 +26,6 @@ MODULE_DESCRIPTION("Our great operating systems homework assignment");  ///< The
 MODULE_VERSION("0.1");            ///< A version number to inform users
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
-static char   DEVICE_NAME[4] = "ATV2";
 static char   message[1024] = {0};           ///< Memory for the string that is passed from userspace
 static short  size_of_message;              ///< Used to remember the size of the string stored
 static int    numberOpens = 0;              ///< Counts the number of times the device is opened
