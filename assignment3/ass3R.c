@@ -28,17 +28,17 @@ MODULE_DESCRIPTION("Our great operating systems homework assignment");  ///< The
 MODULE_VERSION("0.1");            ///< A version number to inform users
 
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
-static short  size_of_message;              ///< Used to remember the size of the string stored
 static int    numberOpens = 0;              ///< Counts the number of times the device is opened
+
 static struct class*  ass3ReadClass  = NULL; ///< The device-driver class struct pointer
 static struct device* ass3ReadDevice = NULL; ///< The device-driver device struct pointer
+
 static DEFINE_MUTEX(ass2_mutex);  /// A macro that is used to declare a new mutex that is visible in this file
                                      /// results in a semaphore variable ebbchar_mutex with value 1 (unlocked)
                                      /// DEFINE_MUTEX_LOCKED() results in a variable with value 0 (locked)
 
-extern char  * message;
-
-
+extern char message[1024];
+extern short size_of_message;
 
 
 // The prototype functions for the character driver -- must come before the struct definition

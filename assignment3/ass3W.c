@@ -27,6 +27,7 @@ MODULE_AUTHOR("Mark Vetro, Nicholas Ho Lung, Jesse Lopez");    ///< The author -
 MODULE_DESCRIPTION("Our great operating systems homework assignment");  ///< The description -- see modinfo
 MODULE_VERSION("0.1");            ///< A version number to inform users
 
+
 static int    majorNumber;                  ///< Stores the device number -- determined automatically
 static char   message[1024] = {0};           ///< Memory for the string that is passed from userspace
 static short  size_of_message;              ///< Used to remember the size of the string stored
@@ -38,10 +39,7 @@ static DEFINE_MUTEX(ass2_mutex);  /// A macro that is used to declare a new mute
                                      /// DEFINE_MUTEX_LOCKED() results in a variable with value 0 (locked)
 
 EXPORT_SYMBOL(message);
-
-
-
-
+EXPORT_SYMBOL(size_of_message);
 
 // The prototype functions for the character driver -- must come before the struct definition
 static int     dev_open(struct inode *, struct file *);
