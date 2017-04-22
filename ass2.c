@@ -16,9 +16,11 @@ Operating Systems Assignment 2
 #include <linux/kernel.h>         // Contains types, macros, functions for the kernel
 #include <linux/fs.h>
 #include <asm/uaccess.h>          // Required for the copy to user function
+#include <linux/mutex.h>	         /// Required for the mutex functionality
 
 #define  DEVICE_NAME "ass2"    ///< The device will appear at /dev/assignmentTwoV2 using this value
 #define  CLASS_NAME  "ATV2"        ///< The device class -- this is a character device driver
+
 
 MODULE_LICENSE("GPL");            ///< The license type -- this affects available functionality
 MODULE_AUTHOR("Mark Vetro, Nicholas Ho Lung, Jesse Lopez");    ///< The author -- visible when you use modinfo
@@ -31,6 +33,9 @@ static short  size_of_message;              ///< Used to remember the size of th
 static int    numberOpens = 0;              ///< Counts the number of times the device is opened
 static struct class*  assignmentTwoV2Class  = NULL; ///< The device-driver class struct pointer
 static struct device* assignmentTwoV2Device = NULL; ///< The device-driver device struct pointer
+static DEFINE_MUTEX(ass2_mutex);  /// A macro that is used to declare a new mutex that is visible in this file
+                                     /// results in a semaphore variable ass2_mutex with value 1 (unlocked)
+                                     /// DEFINE_MUTEX_LOCKED() results in a variable with value 0 (locked)
 
 
 
@@ -64,6 +69,8 @@ static struct file_operations fops =
  */
 static int __init assignmentTwoV2_init(void){
    printk(KERN_INFO "assignmentTwoV2: Initializing the assignmentTwoV2 LKM\n");
+
+   mutex_init(&ass2_mutex);
 
    // Try to dynamically allocate a major number for the device -- more difficult but worth it
    majorNumber = register_chrdev(0, DEVICE_NAME, &fops);
@@ -99,6 +106,7 @@ static int __init assignmentTwoV2_init(void){
  *  code is used for a built-in driver (not a LKM) that this function is not required.
  */
 static void __exit assignmentTwoV2_exit(void){
+   mutex_destroy(&ass2_mutex);
    device_destroy(assignmentTwoV2Class, MKDEV(majorNumber, 0));     // remove the device
    class_unregister(assignmentTwoV2Class);                          // unregister the device class
    class_destroy(assignmentTwoV2Class);                             // remove the device class
@@ -112,9 +120,19 @@ static void __exit assignmentTwoV2_exit(void){
  *  @param filep A pointer to a file object (defined in linux/fs.h)
  */
 static int dev_open(struct inode *inodep, struct file *filep){
-   numberOpens++;
-   printk(KERN_INFO "assignmentTwoV2: Device has been opened %d time(s)\n", numberOpens);
-   return 0;
+
+	if(!mutex_trylock(&ass2_mutex))
+	   {    /// Try to acquire the mutex (i.e., put the lock on/down)
+		                                  /// returns 1 if successful and 0 if there is contention
+	      printk(KERN_ALERT "assignmentTwoV2: Device in use by another process");
+	      return -EBUSY;
+	   }
+	else{
+	   numberOpens++;
+	   printk(KERN_INFO "assignmentTwoV2: Device has been opened %d time(s)\n", numberOpens);
+	   return 0;
+	}
+   
 }
 
 /** @brief This function is called whenever device is being read from user space i.e. data is
@@ -178,9 +196,11 @@ static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, lof
  *  @param filep A pointer to a file object (defined in linux/fs.h)
  */
 static int dev_release(struct inode *inodep, struct file *filep){
+   mutex_unlock(&ass2_mutex); 
    printk(KERN_INFO "assignmentTwoV2: Device successfully closed\n");
    return 0;
 }
+
 
 /** @brief A module must use the module_init() module_exit() macros from linux/init.h, which
  *  identify the initialization function at insertion time and the cleanup function (as
